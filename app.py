@@ -16,9 +16,28 @@ load_dotenv(os.path.join(basedir, '.env'))
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Upload folder
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Vercel specific configuration
+is_vercel = os.environ.get('VERCEL') == '1'
+
+if is_vercel:
+    os.environ['DATABASE_PATH'] = '/tmp/eduflow.db'
+    UPLOAD_FOLDER = '/tmp/uploads'
+    
+    # Initialize and seed database on cold start in Vercel's /tmp dir
+    if not os.path.exists('/tmp/eduflow.db'):
+        try:
+            init_db()
+            seed_data()
+        except Exception as e:
+            print(f"Error initializing database on Vercel: {e}")
+else:
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+
+try:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+except Exception as e:
+    print(f"Could not create upload folder: {e}")
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # 20 MB limit
 
