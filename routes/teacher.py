@@ -702,10 +702,6 @@ def upload_pdf():
     # Save the file temporarily
     from flask import current_app
     import os
-    import cloudinary
-    import cloudinary.uploader
-    
-
     
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
     upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
