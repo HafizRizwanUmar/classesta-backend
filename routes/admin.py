@@ -213,6 +213,8 @@ def add_course():
         conn.close()
         return jsonify({'message': 'Course created', 'id': c.lastrowid}), 201
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         conn.close()
         return jsonify({'message': f'Error creating course: {str(e)}'}), 400
 
