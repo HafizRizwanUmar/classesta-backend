@@ -54,6 +54,20 @@ app.register_blueprint(shared_bp,  url_prefix='/api/shared')
 def serve_upload(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/api/proxy-pdf')
+def proxy_pdf():
+    from flask import request, Response
+    import urllib.request
+    url = request.args.get('url')
+    if not url:
+        return "No url provided", 400
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            return Response(response.read(), mimetype='application/pdf')
+    except Exception as e:
+        return str(e), 500
+
 @app.route('/')
 def index():
     return {'message': 'EduFlow API is running', 'version': '2.0'}
