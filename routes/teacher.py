@@ -699,15 +699,29 @@ def upload_pdf():
     if not file.filename or not file.filename.lower().endswith('.pdf'):
         return jsonify({'message': 'Only .pdf files are supported'}), 400
 
-    # Save the file
+    # Save the file temporarily
     from flask import current_app
     import os
+    import cloudinary
+    import cloudinary.uploader
+    
+    cloudinary.config(
+        cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
+        api_key = os.getenv('CLOUDINARY_API_KEY'),
+        api_secret = os.getenv('CLOUDINARY_API_SECRET'),
+        secure = True
+    )
     
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
     upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
     file.save(upload_path)
     
-    pdf_url = f"/api/uploads/{unique_filename}"
+    # Upload to Cloudinary
+    try:
+        upload_result = cloudinary.uploader.upload(upload_path, resource_type="auto")
+        pdf_url = upload_result.get('secure_url')
+    except Exception as e:
+        return jsonify({'message': f'Cloudinary upload failed: {str(e)}'}), 500
 
     # Extract text per page
     try:

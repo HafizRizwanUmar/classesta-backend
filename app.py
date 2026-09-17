@@ -42,6 +42,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # 20 MB limit
 
 # Register blueprints
+from routes.taxonomy_mongo import taxonomy_bp
+app.register_blueprint(taxonomy_bp, url_prefix='/api/taxonomy')
 app.register_blueprint(auth_bp,    url_prefix='/api/auth')
 app.register_blueprint(admin_bp,   url_prefix='/api/admin')
 app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
