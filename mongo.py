@@ -10,5 +10,8 @@ def get_mongo_db():
         uri = os.getenv('MONGO_URI')
         if uri:
             client = MongoClient(uri)
-            db = client.get_default_database()
+            try:
+                db = client.get_default_database()
+            except:
+                db = client['classesta']
     return db
