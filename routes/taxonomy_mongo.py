@@ -1,7 +1,7 @@
-import os
+import json
 from flask import Blueprint, request, jsonify
 from auth import role_required, token_required
-from mongo import get_mongo_db
+from database import get_db
 
 taxonomy_bp = Blueprint('taxonomy_mongo', __name__)
 
@@ -9,18 +9,21 @@ taxonomy_bp = Blueprint('taxonomy_mongo', __name__)
 @role_required('Teacher')
 def share_presentation():
     try:
-        db = get_mongo_db()
-        if db is None:
-            return jsonify({'message': 'MongoDB not configured on server'}), 500
         data = request.json
-        
-        db.presentations.insert_one({
-            'teacher_id': request.user_id,
-            'filename': data.get('filename'),
-            'pdfUrl': data.get('pdfUrl'),
-            'slides': data.get('slides'),
-            'sharedAt': data.get('sharedAt')
-        })
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO presentations (teacher_id, filename, pdfUrl, slides, sharedAt)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            request.user_id,
+            data.get('filename'),
+            data.get('pdfUrl'),
+            json.dumps(data.get('slides')),
+            data.get('sharedAt')
+        ))
+        conn.commit()
+        conn.close()
         return jsonify({'message': 'Shared successfully'})
     except Exception as e:
         return jsonify({'message': str(e)}), 500
@@ -29,14 +32,19 @@ def share_presentation():
 @token_required
 def get_shared_presentations():
     try:
-        db = get_mongo_db()
-        if db is None:
-            return jsonify({'message': 'MongoDB not configured on server'}), 500
-        cursor = db.presentations.find().sort('_id', -1).limit(10)
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT * FROM presentations ORDER BY id DESC LIMIT 10')
+        rows = c.fetchall()
+        conn.close()
+        
         presentations = []
-        for doc in cursor:
-            doc['_id'] = str(doc['_id'])
+        for row in rows:
+            doc = dict(row)
+            doc['_id'] = str(doc['id'])
+            doc['slides'] = json.loads(doc['slides']) if doc['slides'] else []
             presentations.append(doc)
+            
         return jsonify(presentations)
     except Exception as e:
         return jsonify({'message': str(e)}), 500

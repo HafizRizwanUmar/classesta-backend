@@ -169,4 +169,15 @@ def _migrate(conn, c):
         room TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )""")
+
+    # presentations table
+    c.execute("""CREATE TABLE IF NOT EXISTS presentations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_id INTEGER,
+        filename TEXT,
+        pdfUrl TEXT,
+        slides TEXT,
+        sharedAt TEXT
+    )""")
+
     conn.commit()
