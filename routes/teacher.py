@@ -718,7 +718,9 @@ def upload_pdf():
     
     # Upload to Cloudinary
     try:
-        upload_result = cloudinary.uploader.upload(upload_path, resource_type="auto")
+        # Upload to Cloudinary. Use resource_type='image' so Cloudinary delivers it inline (for the iframe to render)
+        # rather than as an attachment (which would force a download).
+        upload_result = cloudinary.uploader.upload(upload_path, resource_type="image")
         pdf_url = upload_result.get('secure_url')
     except Exception as e:
         return jsonify({'message': f'Cloudinary upload failed: {str(e)}'}), 500
