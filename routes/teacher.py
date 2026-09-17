@@ -705,25 +705,13 @@ def upload_pdf():
     import cloudinary
     import cloudinary.uploader
     
-    cloudinary.config(
-        cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
-        api_key = os.getenv('CLOUDINARY_API_KEY'),
-        api_secret = os.getenv('CLOUDINARY_API_SECRET'),
-        secure = True
-    )
+
     
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
     upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
     file.save(upload_path)
-    
-    # Upload to Cloudinary
-    try:
-        # Upload to Cloudinary. Use resource_type='image' so Cloudinary delivers it inline (for the iframe to render)
-        # rather than as an attachment (which would force a download).
-        upload_result = cloudinary.uploader.upload(upload_path, resource_type="image")
-        pdf_url = upload_result.get('secure_url')
-    except Exception as e:
-        return jsonify({'message': f'Cloudinary upload failed: {str(e)}'}), 500
+    # Local file serving
+    pdf_url = f"/api/uploads/{unique_filename}"
 
     # Extract text per page
     try:
