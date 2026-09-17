@@ -198,31 +198,45 @@ def add_course():
         if not data.get(f):
             return jsonify({'message': f'{f} is required'}), 400
     conn = get_db()
+    
+    teacher_id = data.get('teacher_id')
+    if teacher_id == '':
+        teacher_id = None
+        
     try:
         c = conn.cursor()
         c.execute("""INSERT INTO courses (name,code,credits,teacher_id,schedule,description)
                      VALUES (?,?,?,?,?,?)""",
                   (data['name'], data['code'], data.get('credits',3),
-                   data.get('teacher_id'), data.get('schedule'), data.get('description')))
+                   teacher_id, data.get('schedule'), data.get('description')))
         conn.commit()
         conn.close()
         return jsonify({'message': 'Course created', 'id': c.lastrowid}), 201
-    except:
+    except Exception as e:
         conn.close()
-        return jsonify({'message': 'Course code already exists'}), 400
+        return jsonify({'message': f'Error creating course: {str(e)}'}), 400
 
 @admin_bp.route('/courses/<int:cid>', methods=['PUT'])
 @role_required('Admin')
 def update_course(cid):
     data = request.get_json()
     conn = get_db()
-    conn.execute("""UPDATE courses SET name=?,code=?,credits=?,teacher_id=?,schedule=?,description=?
-                    WHERE id=?""",
-                 (data.get('name'), data.get('code'), data.get('credits',3),
-                  data.get('teacher_id'), data.get('schedule'), data.get('description'), cid))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': 'Course updated'}), 200
+    
+    teacher_id = data.get('teacher_id')
+    if teacher_id == '':
+        teacher_id = None
+        
+    try:
+        conn.execute("""UPDATE courses SET name=?,code=?,credits=?,teacher_id=?,schedule=?,description=?
+                        WHERE id=?""",
+                     (data.get('name'), data.get('code'), data.get('credits',3),
+                      teacher_id, data.get('schedule'), data.get('description'), cid))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Course updated'}), 200
+    except Exception as e:
+        conn.close()
+        return jsonify({'message': f'Error updating course: {str(e)}'}), 400
 
 @admin_bp.route('/courses/<int:cid>', methods=['DELETE'])
 @role_required('Admin')
